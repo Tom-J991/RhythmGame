@@ -27,8 +27,13 @@ void NoteObject::Update(double dt, const float songPosInBeats, const float beats
 
 	m_position = Vector2Lerp(m_startPos, m_endPos, (beatsInAdvance - (m_beat - songPosInBeats)) / beatsInAdvance);
 
-	if (Vector2Distance(m_position, m_endPos) <= 4.0f)
+	if (m_position.y > SCREEN_HEIGHT_HALF + (HITBOX_SIZE/2.0f))
+	{
+		if (m_noteMissCallback)
+			m_noteMissCallback();
+
 		Destroy();
+	}
 }
 
 void NoteObject::Draw()
@@ -37,4 +42,14 @@ void NoteObject::Draw()
 		return;
 
 	DrawRectangle((int)m_position.x, (int)m_position.y, (int)m_size, (int)m_size, DARKGRAY);
+}
+
+void NoteObject::DoHit()
+{
+	float dist = Vector2Distance(m_position, m_endPos);
+
+	if (m_noteHitCallback)
+		m_noteHitCallback(dist);
+
+	Destroy();
 }

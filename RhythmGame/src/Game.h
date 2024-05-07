@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Common.h"
+
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -9,6 +11,9 @@
 
 #include "NoteObject.h"
 #include "NoteObjectPool.h"
+
+#include "ScoreText.h"
+#include "ScoreTextPool.h"
 
 struct BeatMap
 {
@@ -37,6 +42,9 @@ private:
 	void OnBeat(float beat);
 	void Draw();
 
+	void OnNoteHit(const float distance);
+	void OnNoteMiss();
+
 private:
 	bool m_isRunning = false;
 
@@ -44,6 +52,8 @@ private:
 	std::unordered_map<std::string, Music> m_loadedMusic;
 
 	std::unordered_map<std::string, BeatMap> m_beatMaps;
+
+	ScoreTextPool m_scoreTextPool;
 
 	NoteObjectPool m_notePool;
 

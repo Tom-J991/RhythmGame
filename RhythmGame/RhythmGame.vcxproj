@@ -96,11 +96,16 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\NoteObject.cpp" />
     <ClCompile Include="src\NoteObjectPool.cpp" />
+    <ClCompile Include="src\ScoreText.cpp" />
+    <ClCompile Include="src\ScoreTextPool.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Common.h" />
     <ClInclude Include="src\Game.h" />
     <ClInclude Include="src\NoteObject.h" />
     <ClInclude Include="src\NoteObjectPool.h" />
+    <ClInclude Include="src\ScoreText.h" />
+    <ClInclude Include="src\ScoreTextPool.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

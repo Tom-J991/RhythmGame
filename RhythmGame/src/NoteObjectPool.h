@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Common.h"
+
 #include "NoteObject.h"
 
 #include <raylib.h>
@@ -10,7 +12,11 @@ public:
 	NoteObjectPool() = default;
 	~NoteObjectPool() = default;
 
+	void InitNoteCallbacks(const NoteHitCallback &hitCallback, const NoteMissCallback &missCallback);
+
 	void CreateNote(float beat, Vector2 startPos, Vector2 endPos, float size = 16.0f);
+
+	NoteObject *FindNearestNote();
 
 	void Update(double dt, const float songPosInBeats, const float beatsInAdvance);
 	void Draw();

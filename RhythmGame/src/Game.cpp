@@ -2,10 +2,6 @@
 
 #include <iostream>
 
-#define SCREEN_WIDTH 640
-#define SCREEN_HEIGHT 480
-#define TARGET_FPS 60
-
 void Game::Run()
 {
 	InitAudioDevice();
@@ -45,11 +41,12 @@ void Game::LoadAssets()
 	m_loadedSounds["SFX_METRONOME"] = LoadSound("./assets/sfx/metronome.wav");
 	m_loadedMusic["BGM_BRAZIL"] = LoadMusicStream("./assets/bgm/brazil.ogg");
 	m_loadedMusic["BGM_FIRE"] = LoadMusicStream("./assets/bgm/fire.ogg");
+	m_loadedMusic["BGM_REMINDME"] = LoadMusicStream("./assets/bgm/remindme.ogg");
 
 	m_beatMaps["BRAZIL"] =
 	{
 		m_loadedMusic["BGM_BRAZIL"], 128.0f,
-		{ // Notes
+		{ // Notes (Unused, right now)
 			1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f
 		}
 	};
@@ -57,7 +54,15 @@ void Game::LoadAssets()
 	m_beatMaps["FIRE"] =
 	{
 		m_loadedMusic["BGM_FIRE"], 200.0f,
-		{ // Notes
+		{ // Notes (Unused, right now)
+			1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f
+		}
+	};
+
+	m_beatMaps["REMINDME"] =
+	{
+		m_loadedMusic["BGM_REMINDME"], 122.45f,
+		{ // Notes (Unused, right now)
 			1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f
 		}
 	};
@@ -65,7 +70,9 @@ void Game::LoadAssets()
 
 void Game::Init()
 {
-	m_currentBeatMap = m_beatMaps["FIRE"];
+	m_notePool.InitNoteCallbacks([this](const float d) { OnNoteHit(d); }, [this]() { OnNoteMiss(); });
+
+	m_currentBeatMap = m_beatMaps["BRAZIL"];
 	m_secondsPerBeat = 60.0f / m_currentBeatMap.bpm;
 
 	PlayMusicStream(m_currentBeatMap.music);
@@ -82,6 +89,7 @@ void Game::Shutdown()
 
 	UnloadMusicStream(m_loadedMusic["BGM_BRAZIL"]);
 	UnloadMusicStream(m_loadedMusic["BGM_FIRE"]);
+	UnloadMusicStream(m_loadedMusic["BGM_REMINDME"]);
 	UnloadSound(m_loadedSounds["SFX_METRONOME"]);
 
 	CloseAudioDevice();
@@ -93,6 +101,14 @@ void Game::Update(double dt)
 	UpdateMusicStream(m_currentBeatMap.music);
 
 	m_notePool.Update(dt, m_songPositionInBeats, (float)m_beatsInAdvance);
+	m_scoreTextPool.Update(dt);
+
+	if (IsKeyPressed(KEY_Z))
+	{
+		NoteObject *note = m_notePool.FindNearestNote();
+		if (note != nullptr)
+			note->DoHit();
+	}
 
 	m_songTimeNormalized = GetMusicTimePlayed(m_currentBeatMap.music) / GetMusicTimeLength(m_currentBeatMap.music);
 	if (m_songTimeNormalized > 1.0f)
@@ -108,7 +124,7 @@ void Game::Update(double dt)
 	if (m_nextNoteIndex < m_currentBeatMap.notes.size() &&
 		m_currentBeatMap.notes[m_nextNoteIndex] < m_songPositionInBeats + m_beatsInAdvance)
 	{
-		//m_notePool.CreateNote(m_currentBeatMap.notes[m_nextNoteIndex], { 320.0f, -32.0f }, { 320.0f, 240.0f }, 16.0f);
+		//m_notePool.CreateNote(m_currentBeatMap.notes[m_nextNoteIndex], { SCREEN_WIDTH_HALF, -32.0f }, { SCREEN_WIDTH_HALF, SCREEN_HEIGHT_HALF }, 16.0f);
 
 		m_nextNoteIndex++;
 	}
@@ -124,7 +140,7 @@ void Game::Update(double dt)
 
 void Game::OnBeat(float beat)
 {
-	m_notePool.CreateNote(beat, {320.0f-8, -16.0f}, {320.0f-8, 240.0f-8}, 16.0f);
+	m_notePool.CreateNote(beat, {SCREEN_WIDTH_HALF-8, -16.0f}, {SCREEN_WIDTH_HALF-8, SCREEN_HEIGHT_HALF-8}, 16.0f);
 
 	PlaySound(m_loadedSounds["SFX_METRONOME"]);
 }
@@ -133,9 +149,40 @@ void Game::Draw()
 {
 	ClearBackground(RAYWHITE);
 
-	DrawRectangle(320.0f - 12, 240.0f - 12, 24.0f, 24.0f, LIGHTGRAY);
+	DrawRectangle(SCREEN_WIDTH_HALF - (HITBOX_SIZE/2.0f), SCREEN_HEIGHT_HALF - (HITBOX_SIZE/2.0f), HITBOX_SIZE, HITBOX_SIZE, LIGHTGRAY);
+	DrawRectangle(SCREEN_WIDTH_HALF - (HITBOX_SIZE/4.0f), SCREEN_HEIGHT_HALF - (HITBOX_SIZE/4.0f), (int)(HITBOX_SIZE/2.0f), (int)(HITBOX_SIZE/2.0f), GRAY);
+	DrawRectangle(SCREEN_WIDTH_HALF - (HITBOX_SIZE/8.0f), SCREEN_HEIGHT_HALF - (HITBOX_SIZE/8.0f), (int)(HITBOX_SIZE/4.0f), (int)(HITBOX_SIZE/4.0f), DARKGRAY);
 
 	m_notePool.Draw();
+	m_scoreTextPool.Draw();
 
-	DrawRectangle(64, 480-64-16, (int)(m_songTimeNormalized * 512.0f), 16, MAROON);
+	DrawRectangle(64, SCREEN_HEIGHT-64-16, (int)(m_songTimeNormalized * 512.0f), 16, MAROON);
+}
+
+void Game::OnNoteHit(const float distance)
+{
+	NoteScore score = NoteScore::SCORE_TERRIBLE;
+
+	float halfSize = HITBOX_SIZE / 2.0f;
+
+	if (distance > halfSize) // Miss.
+	{
+		OnNoteMiss();
+		return;
+	}
+
+	// Within light gray box.
+	if (distance <= (halfSize/4.0f))
+		score = NoteScore::SCORE_PERFECT;
+	else if (distance <= (halfSize/2.0f))
+		score = NoteScore::SCORE_GOOD;
+	else if (distance <= halfSize)
+		score = NoteScore::SCORE_OKAY;
+
+	m_scoreTextPool.CreateScoreText({ SCREEN_WIDTH_HALF-HITBOX_SIZE, SCREEN_HEIGHT_HALF-HITBOX_SIZE }, score, 1.0f);
+}
+
+void Game::OnNoteMiss()
+{
+	m_scoreTextPool.CreateScoreText({ SCREEN_WIDTH_HALF-HITBOX_SIZE, SCREEN_HEIGHT_HALF-HITBOX_SIZE }, NoteScore::SCORE_TERRIBLE, 1.0f);
 }

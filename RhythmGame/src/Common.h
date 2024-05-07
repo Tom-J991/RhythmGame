@@ -1,0 +1,10 @@
+#pragma once
+
+#define SCREEN_WIDTH 640
+#define SCREEN_HEIGHT 480
+#define TARGET_FPS 60
+
+#define SCREEN_WIDTH_HALF (SCREEN_WIDTH/2.0f)
+#define SCREEN_HEIGHT_HALF (SCREEN_HEIGHT/2.0f)
+
+#define HITBOX_SIZE 40
